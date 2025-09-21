@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catch & Learn — Pro Version</title>
+  <style>
+    /* Pro visuals with beige-themed accents */
+    :root {
+      --bg1: #c58019; /* warm beige */
+      --bg2: #8f5d0d;
+      --panel: rgba(20,18,16,0.06);
+      --accent: #b16217; /* brownish gold */
+      --glow: rgba(176,124,74,0.16);
+      --muted: #6b6b6b;
+      --glass: rgba(184, 26, 26, 0.5);
+      --radius: 14px;
+      --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: var(--font-sans);
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: #222;
+    }
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+    }
+    .card {
+      width: 980px;
+      max-width: 100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.55));
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 12px 40px rgba(14,12,10,0.08);
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 18px;
+    }
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #2b2b2b;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .canvas-wrap {
+      background: linear-gradient(180deg, rgba(146, 18, 18, 0.7), rgba(250,245,240,0.7));
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 1px 0 rgba(181, 28, 28, 0.6);
+    }
+    canvas {
+      background: transparent;
+      border-radius: 8px;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button {
+      background: var(--accent);
+      border: none;
+      padding: 9px 14px;
+      border-radius: 10px;
+      color: rgb(70, 7, 7);
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 6px 18px rgba(176,124,74,0.18);
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(160, 91, 25, 0.25);
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: none;
+    }
+    button.ghost:hover {
+      background: rgba(0,0,0,0.04);
+    }
+    .stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(183, 109, 109, 0.6);
+      border-radius: 10px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .rules {
+      padding: 12px;
+      background: rgba(195, 13, 13, 0.65);
+      border-radius: 10px;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .mobile-controls {
+      display: none;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .mobile-controls button {
+      flex: 1;
+      padding: 16px;
+      font-size: 24px;
+    }
+    @media (max-width: 900px) {
+      .card {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .mobile-controls {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="left">
+        <div>
+          <h1>Catch & Learn — Pro Visuals</h1>
+          <p>A polished single-file HTML5 game. Use arrow keys or touch to move the paddle. Catch golden orbs, avoid dark mines. Highscore saved locally.</p>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="game" width="420" height="600" role="img" aria-label="Catch and Learn game canvas"></canvas>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn">Start</button>
+          <button id="pauseBtn" class="ghost">Pause</button>
+          <button id="resetBtn" class="ghost">Reset</button>
+          <button id="shareBtn" class="ghost">How to share</button>
+        </div>
+
+        <div class="mobile-controls">
+          <button id="leftBtn" class="ghost">←</button>
+          <button id="rightBtn" class="ghost">→</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat-row"><div><strong>Score</strong></div><div id="score">0</div></div>
+          <div class="stat-row"><div><strong>High Score</strong></div><div id="highscore">0</div></div>
+          <div class="stat-row"><div><strong>Level</strong></div><div id="level">1</div></div>
+          <div class="stat-row"><div><strong>Lives</strong></div><div id="lives">3</div></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="rules">
+          <h3 style="margin:0 0 8px 0">How to play</h3>
+          <ul style="margin:0 0 8px 18px;color:var(--muted)">
+            <li>Move the paddle with mouse / touch / ← → keys / mobile buttons.</li>
+            <li>Catch <strong style="color:var(--accent)">golden orbs</strong> to gain points.</li>
+            <li>Avoid <strong style="color:#2b2b2b">black mines</strong> — they reduce lives.</li>
+            <li>Difficulty increases every 25 points.</li>
+          </ul>
+          <p style="margin:0;color:var(--muted)"><strong>Tip:</strong> Host on GitHub Pages for a direct playable link to share on LinkedIn.</p>
+        </div>
+
+        <div style="padding:12px;background:rgba(255,255,255,0.6);border-radius:10px">
+          <h4 style="margin:0 0 8px 0">Design notes</h4>
+          <p style="margin:0;color:var(--muted)">This file uses canvas rendering, shader-like glow, and particles for pro polish. Works offline in any modern browser.</p>
+        </div>
+
+        <div class="footer">
+          <div class="small">Made with care — single-file export</div>
+          <div class="small">Press Start to play</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pro-styled Catch Game
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const scoreEl = document.getElementById('score');
+    const highEl = document.getElementById('highscore');
+    const levelEl = document.getElementById('level');
+    const livesEl = document.getElementById('lives');
+
+    const W = canvas.width; const H = canvas.height;
+
+    // Game state
+    let running = false, animationId = null;
+    const state = {
+      paddle: {x: W/2 - 70/2, y: H - 48, w:70, h:14, speed:14},
+      orbs: [], mines: [], particles: [], score:0, level:1, lives:3, tick:0
+    };
+
+    const HS_KEY = 'catch_pro_high_v1';
+    let high = parseInt(localStorage.getItem(HS_KEY) || '0',10);
+    highEl.textContent = high;
+
+    // Helpers
+    const rand = (a,b) => Math.random()*(b-a)+a;
+    const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+    // Visual helpers
+    function drawRoundedRect(x,y,w,h,r,fill){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      if(fill){ctx.fill();} else {ctx.stroke();}
+    }
+
+    // Background: subtle stars/particles
+    const bgParticles = Array.from({length:40}).map(()=>({x:rand(0,W), y:rand(0,H), r:rand(0.6,2.2), vx:rand(-0.2,0.2), vy:rand(-0.1,0.1)}));
+
+    function drawBackground(){
+      // soft vignette
+      const g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'rgba(255,255,255,0.75)');
+      g.addColorStop(1,'rgba(250,245,240,0.9)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+      // floating bg particles
+      for(let p of bgParticles){
+        p.x += p.vx; p.y += p.vy;
+        if(p.x<0) p.x = W; if(p.x>W) p.x=0; if(p.y<0) p.y=H; if(p.y>H) p.y=0;
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    // Paddle draw with glow
+    function drawPaddle(){
+      const p = state.paddle;
+      // soft shadow
+      ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(p.x-2,p.y+6,p.w+4,8);
+      // main paddle
+      const grad = ctx.createLinearGradient(p.x,p.y,p.x,p.y+p.h);
+      grad.addColorStop(0,'#123556'); grad.addColorStop(1,'#654789');
+      ctx.fillStyle = grad; drawRoundedRect(p.x,p.y,p.w,p.h,8,true);
+      // accent glow
+      ctx.fillStyle = 'rgba(176,124,74,0.12)'; drawRoundedRect(p.x-8,p.y-8,p.w+16,p.h+16,18,true);
+      ctx.restore();
+    }
+
+    // Spawn orbs and mines based on level and tick
+    function spawn() {
+      state.tick++;
+      // Spawn orbs every 30 ticks (~0.5 sec at 60fps)
+      if (state.tick % 30 === 0) {
+        const size = rand(18, 28);
+        state.orbs.push({
+          x: rand(size, W - size),
+          y: -size,
+          r: size / 2,
+          vy: rand(1 + state.level * 0.2, 2 + state.level * 0.4),
+          glow: true,
+          color: 'gold'
+        });
+      }
+      // Spawn mines less frequently, every 90 ticks (~1.5 sec)
+      if (state.tick % 90 === 0) {
+        const size = rand(20, 30);
+        state.mines.push({
+          x: rand(size, W - size),
+          y: -size,
+          r: size / 2,
+          vy: rand(1 + state.level * 0.3, 2 + state.level * 0.5),
+          glow: false,
+          color: '#2b2b2b'
+        });
+      }
+    }
+
+    // Draw orbs and mines with glow effect
+    function drawOrbsAndMines() {
+      // Draw orbs
+      for (let orb of state.orbs) {
+        if (orb.glow) {
+          const grad = ctx.createRadialGradient(orb.x, orb.y, orb.r * 0.3, orb.x, orb.y, orb.r);
+          grad.addColorStop(0, 'rgba(255,215,0,0.9)');
+          grad.addColorStop(1, 'rgba(255,215,0,0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(orb.x, orb.y, orb.r * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = orb.color;
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Draw mines
+      for (let mine of state.mines) {
+        ctx.fillStyle = mine.color;
+        ctx.beginPath();
+        ctx.arc(mine.x, mine.y, mine.r, 0, Math.PI * 2);
+        ctx.fill();
+        // Add a subtle glow ring
+        const grad = ctx.createRadialGradient(mine.x, mine.y, mine.r * 0.7, mine.x, mine.y, mine.r * 1.5);
+        grad.addColorStop(0, 'rgba(43,43,43,0.3)');
+        grad.addColorStop(1, 'rgba(43,43,43,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(mine.x, mine.y, mine.r * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Update positions of orbs and mines, remove if off screen
+    function updateOrbsAndMines() {
+      state.orbs = state.orbs.filter(orb => {
+        orb.y += orb.vy;
+        return orb.y - orb.r < H;
+      });
+      state.mines = state.mines.filter(mine => {
+        mine.y += mine.vy;
+        return mine.y - mine.r < H;
+      });
+    }
+
+    // Check collision between paddle and orbs/mines
+    function checkCollisions() {
+      const p = state.paddle;
+      // Paddle rectangle
+      const px1 = p.x;
+      const px2 = p.x + p.w;
+      const py1 = p.y;
+      const py2 = p.y + p.h;
+
+      // Check orbs
+      for (let i = state.orbs.length - 1; i >= 0; i--) {
+        const orb = state.orbs[i];
+        // Circle-rect collision
+        const closestX = clamp(orb.x, px1, px2);
+        const closestY = clamp(orb.y, py1, py2);
+        const dx = orb.x - closestX;
+        const dy = orb.y - closestY;
+        if (dx * dx + dy * dy < orb.r * orb.r) {
+          // Caught orb
+          state.score += 5;
+          state.orbs.splice(i, 1);
+          spawnParticles(orb.x, orb.y, orb.color);
+          updateLevel();
+          updateScore();
+        }
+      }
+
+      // Check mines
+      for (let i = state.mines.length - 1; i >= 0; i--) {
+        const mine = state.mines[i];
+        const closestX = clamp(mine.x, px1, px2);
+        const closestY = clamp(mine.y, py1, py2);
+        const dx = mine.x - closestX;
+        const dy = mine.y - closestY;
+        if (dx * dx + dy * dy < mine.r * mine.r) {
+          // Hit mine
+          state.lives--;
+          livesEl.textContent = state.lives;
+          state.mines.splice(i, 1);
+          spawnParticles(mine.x, mine.y, '#2b2b2b');
+          if (state.lives <= 0) {
+            gameOver();
+          }
+        }
+      }
+    }
+
+    // Spawn simple particles for effect
+    function spawnParticles(x, y, color) {
+      for (let i = 0; i < 12; i++) {
+        state.particles.push({
+          x, y,
+          vx: rand(-2, 2),
+          vy: rand(-2, 2),
+          alpha: 1,
+          size: rand(2, 4),
+          color
+        });
+      }
+    }
+
+    // Update and draw particles
+    function updateParticles() {
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if (p.alpha <= 0) {
+          state.particles.splice(i, 1);
+          continue;
+        }
+        ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Convert hex color to rgb string for rgba()
+    function hexToRgb(hex) {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+      }
+      const bigint = parseInt(hex, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r},${g},${b}`;
+    }
+
+    // Update level based on score
+    function updateLevel() {
+      const newLevel = Math.floor(state.score / 25) + 1;
+      if (newLevel !== state.level) {
+        state.level = newLevel;
+        levelEl.textContent = state.level;
+      }
+    }
+
+    // Update score display and high score
+    function updateScore() {
+      scoreEl.textContent = state.score;
+      if (state.score > high) {
+        high = state.score;
+        highEl.textContent = high;
+        localStorage.setItem(HS_KEY, high);
+      }
+    }
+
+    // Draw lives as small circles
+    function drawLives() {
+      const radius = 8;
+      for (let i = 0; i < state.lives; i++) {
+        const x = 20 + i * (radius * 2 + 6);
+        const y = 20;
+        ctx.fillStyle = 'rgba(176,124,74,0.8)';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff7ee';
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Game over handler
+    function gameOver() {
+      running = false;
+      pauseBtn.classList.add('ghost');
+      pauseBtn.textContent = 'Pause';
+      alert(`Game Over! Your score: ${state.score}`);
+    }
+
+    // Clear and redraw everything
+    function draw() {
+      drawBackground();
+      drawPaddle();
+      drawOrbsAndMines();
+      drawLives();
+      updateParticles();
+    }
+
+    // Game loop
+    function loop() {
+      if (!running) return;
+      spawn();
+      updateOrbsAndMines();
+      checkCollisions();
+      draw();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    // Controls
+    function movePaddle(dx) {
+      const p = state.paddle;
+      p.x = clamp(p.x + dx, 0, W - p.w);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (!running) return;
+      if (e.key === 'ArrowLeft') {
+        movePaddle(-state.paddle.speed);
+      } else if (e.key === 'ArrowRight') {
+        movePaddle(state.paddle.speed);
+      }
+    });
+
+    // Mouse and touch controls
+    canvas.addEventListener('mousemove', e => {
+      if (!running) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      state.paddle.x = clamp(mouseX - state.paddle.w / 2, 0, W - state.paddle.w);
+    });
+
+    canvas.addEventListener('touchmove', e => {
+      if (!running) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      state.paddle.x = clamp(touchX - state.paddle.w / 2, 0, W - state.paddle.w);
+    }, {passive: false});
+
+    // Mobile button controls
+    leftBtn.addEventListener('touchstart', () => {
+      if (!running) return;
+      movePaddle(-state.paddle.speed);
+    });
+
+    rightBtn.addEventListener('touchstart', () => {
+      if (!running) return;
+      movePaddle(state.paddle.speed);
+    });
+
+    // Button handlers
+    startBtn.addEventListener('click', () => {
+      if (!running) {
+        running = true;
+        pauseBtn.classList.remove('ghost');
+        pauseBtn.textContent = 'Pause';
+        loop();
+      }
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      if (!running) return;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+        running = false;
+        pauseBtn.textContent = 'Resume';
+      } else {
+        running = true;
+        pauseBtn.textContent = 'Pause';
+        loop();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      running = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      // Reset state
+      state.orbs = [];
+      state.mines = [];
+      state.particles = [];
+      state.score = 0;
+      state.level = 1;
+      state.lives = 3;
+      state.tick = 0;
+      state.paddle.x = W / 2 - state.paddle.w / 2;
+      scoreEl.textContent = '0';
+      levelEl.textContent = '1';
+      livesEl.textContent = '3';
+      pauseBtn.textContent = 'Pause';
+      pauseBtn.classList.add('ghost');
+      draw();
+    });
+
+    shareBtn.addEventListener('click', () => {
+      alert('To share this game, host the HTML file on GitHub Pages or any static hosting service, then share the URL on LinkedIn or other platforms.');
+    });
+
+    // Initial draw
+    draw();
+  </script>
+</body>
+</html>
